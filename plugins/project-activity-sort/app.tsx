@@ -47,6 +47,10 @@ function readCurrentProjectOrder(): string[] {
 export function synchronizeBaselineProjectOrder(
   sortedProjectIds: readonly string[],
 ): boolean {
+  if (sortedProjectIds.length === 0) {
+    return false;
+  }
+
   try {
     const oldValue = window.localStorage.getItem(SIDEBAR_SECTION_ORDER_KEY);
     const storedOrder = readStoredSidebarOrder(oldValue);

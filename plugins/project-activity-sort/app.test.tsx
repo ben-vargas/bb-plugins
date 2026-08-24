@@ -86,10 +86,10 @@ describe("project activity sidebar wrapper", () => {
         onNavigate: vi.fn(),
         searchQuery: "",
         experimental_Original: () => (
-          <nav aria-label="BB original sidebar">
+          <nav aria-label="bb original sidebar">
             <span data-testid="baseline-unread" />
             <span data-testid="baseline-activity-spinner" />
-            BB original sidebar
+            bb original sidebar
           </nav>
         ),
       },
@@ -106,7 +106,7 @@ describe("project activity sidebar wrapper", () => {
       },
     );
 
-    expect(screen.getByLabelText("BB original sidebar")).toBeTruthy();
+    expect(screen.getByLabelText("bb original sidebar")).toBeTruthy();
     expect(screen.getByTestId("baseline-unread")).toBeTruthy();
     expect(screen.getByTestId("baseline-activity-spinner")).toBeTruthy();
 
@@ -138,7 +138,7 @@ describe("project activity sidebar wrapper", () => {
         isCompactViewport: false,
         onNavigate: vi.fn(),
         searchQuery: "",
-        experimental_Original: () => <div>BB original loading state</div>,
+        experimental_Original: () => <div>bb original loading state</div>,
       },
       {
         sidebarThreads: {
@@ -149,7 +149,7 @@ describe("project activity sidebar wrapper", () => {
       },
     );
 
-    expect(screen.getByText("BB original loading state")).toBeTruthy();
+    expect(screen.getByText("bb original loading state")).toBeTruthy();
     expect(window.localStorage.getItem(SIDEBAR_SECTION_ORDER_KEY)).toBe(
       initialOrder,
     );
@@ -191,6 +191,23 @@ describe("project activity sidebar wrapper", () => {
     const { synchronizeBaselineProjectOrder } = await import("./app");
 
     expect(synchronizeBaselineProjectOrder(["def", "abc"])).toBe(false);
+    expect(window.localStorage.getItem(SIDEBAR_SECTION_ORDER_KEY)).toBe(
+      storedOrder,
+    );
+    expect(listener).not.toHaveBeenCalled();
+
+    window.removeEventListener("storage", listener);
+  });
+
+  it("does not change sidebar order when there are no ordinary projects", async () => {
+    const storedOrder = JSON.stringify(["pinned", "projects", "threads"]);
+    window.localStorage.setItem(SIDEBAR_SECTION_ORDER_KEY, storedOrder);
+    const listener = vi.fn();
+    window.addEventListener("storage", listener);
+    await loadPluginApp(() => import("./app"));
+    const { synchronizeBaselineProjectOrder } = await import("./app");
+
+    expect(synchronizeBaselineProjectOrder([])).toBe(false);
     expect(window.localStorage.getItem(SIDEBAR_SECTION_ORDER_KEY)).toBe(
       storedOrder,
     );

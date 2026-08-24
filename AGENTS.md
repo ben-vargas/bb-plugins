@@ -1,6 +1,6 @@
 # Repository instructions
 
-- Keep every BB plugin in its own `plugins/<plugin-id>/` directory.
+- Keep every bb plugin in its own `plugins/<plugin-id>/` directory.
 - Add each plugin to `.bb/plugins.json`; do not duplicate plugin manifest data
   in that collection index.
 - Run `npm run ci` at the repository root before proposing a release.
