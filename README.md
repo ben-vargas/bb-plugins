@@ -1,7 +1,6 @@
 # bb plugins
 
-Open-source plugins for [bb](https://github.com/get-bb/bb), maintained by
-Ben Vargas.
+Open-source plugins for [bb](https://github.com/get-bb/bb), the agent IDE.
 
 ## Plugins
 
