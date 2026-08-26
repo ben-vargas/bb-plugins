@@ -1,0 +1,50 @@
+{
+  "name": "bb-plugin-xai-voice",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ben-vargas/bb-plugins.git",
+    "directory": "plugins/xai-voice"
+  },
+  "engines": {
+    "bb": ">=0.40",
+    "bbPluginSdk": ">=0.4.16"
+  },
+  "files": [
+    "dist",
+    "icons",
+    "src",
+    "server.ts",
+    "host.ts",
+    "tsconfig.json",
+    "README.md"
+  ],
+  "bb": {
+    "name": "xAI Voice",
+    "description": "Voice transcription (speech-to-text) served by xAI's Grok STT, using an xAI API key or your Grok sign-in.",
+    "branding": {
+      "icon": "./icons/xai-voice.svg"
+    },
+    "server": "./server.ts",
+    "host": "./host.ts",
+    "skills": []
+  },
+  "scripts": {
+    "build": "bb plugin build",
+    "check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@get-bb/plugin-sdk": "0.4.16"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.0.0",
+    "better-sqlite3": "^12.10.0",
+    "cron-parser": "^5.10.0",
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.11"
+  }
+}

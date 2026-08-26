@@ -6,6 +6,10 @@
     {
       "name": "project-activity-sort",
       "source": "./plugins/project-activity-sort"
+    },
+    {
+      "name": "xai-voice",
+      "source": "./plugins/xai-voice"
     }
   ]
 }

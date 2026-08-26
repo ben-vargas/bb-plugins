@@ -7,6 +7,7 @@ Open-source plugins for [bb](https://github.com/get-bb/bb), the agent IDE.
 | Plugin | Description |
 | --- | --- |
 | [Project Activity Sort](./plugins/project-activity-sort) | Orders sidebar project sections by the most recently updated thread while retaining bb's original sidebar UI. |
+| [xAI Voice](./plugins/xai-voice) | Voice transcription (speech-to-text) served by xAI's Grok STT, using an xAI API key or your Grok CLI sign-in. Requires bb >= 0.40. |
 
 ## Install from GitHub
 
@@ -18,16 +19,17 @@ bb plugin install \
   --plugin project-activity-sort
 ```
 
-No release tag has been published yet, so use the `main` install above for
-now. Once released, versions use plugin-specific tags such as
-`project-activity-sort/v0.1.0`. To track compatible releases:
+Releases use plugin-specific tags such as `xai-voice/v0.1.0`. To track
+compatible releases of a plugin:
 
 ```sh
 bb plugin install \
   git:https://github.com/ben-vargas/bb-plugins.git@semver:^0.1.0 \
-  --plugin project-activity-sort \
-  --tag-prefix project-activity-sort/
+  --plugin xai-voice \
+  --tag-prefix xai-voice/
 ```
+
+Plugins without a release tag yet install from `main` as shown above.
 
 Check for and apply compatible updates with:
 
