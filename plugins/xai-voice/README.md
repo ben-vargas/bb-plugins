@@ -10,7 +10,7 @@ prompt-box dictation can run on xAI instead of OpenAI or Codex.
   with a `voice` kind — landed after that release).
 - Credentials on the host that runs transcription, either of:
   - **xAI API key** — `XAI_API_KEY` in the host daemon's environment.
-  - **Grok sign-in (OAuth)** — a Grok CLI session in its auth store
+  - **Grok sign-in (OAuth)** — a Grok Build CLI session in its auth store
     (`GROK_AUTH_PATH`, else `$GROK_HOME/auth.json`, else
     `~/.grok/auth.json`; run `grok` once to sign in). The plugin treats
     that store as strictly read-only: when the ~6h access token has
