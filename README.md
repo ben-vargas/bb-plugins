@@ -32,6 +32,14 @@ bb plugin install \
 
 Plugins without a release tag yet install from `main` as shown above.
 
+## Install from npm
+
+Each plugin is also published to npm under the `@benvargas` scope:
+
+```sh
+bb plugin install npm:@benvargas/bb-plugin-full-width@^0.1.0
+```
+
 Check for and apply compatible updates with:
 
 ```sh

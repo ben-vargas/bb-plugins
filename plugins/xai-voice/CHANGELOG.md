@@ -8,6 +8,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- Scoped the npm package name to `@benvargas/bb-plugin-xai-voice` and added
+  `CHANGELOG.md` to the publish files whitelist; the plugin id (`xai-voice`)
+  and git-tag installs are unchanged.
+
 ## [0.1.0] - 2026-08-25
 
 ### Added

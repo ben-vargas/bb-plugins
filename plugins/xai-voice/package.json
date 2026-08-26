@@ -1,5 +1,5 @@
 {
-  "name": "bb-plugin-xai-voice",
+  "name": "@benvargas/bb-plugin-xai-voice",
   "version": "0.1.0",
   "type": "module",
   "license": "MIT",
@@ -19,7 +19,8 @@
     "server.ts",
     "host.ts",
     "tsconfig.json",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "bb": {
     "name": "xAI Voice",

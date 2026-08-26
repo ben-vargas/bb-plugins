@@ -31,6 +31,9 @@ bb plugin install \
 
 # or from a local checkout of this repository:
 bb plugin install path:. --plugin full-width
+
+# or from npm:
+bb plugin install npm:@benvargas/bb-plugin-full-width@^0.1.0
 ```
 
 ## Toggle and persistence
