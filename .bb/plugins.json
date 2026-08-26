@@ -4,6 +4,10 @@
   "name": "bb-plugins",
   "plugins": [
     {
+      "name": "full-width",
+      "source": "./plugins/full-width"
+    },
+    {
       "name": "project-activity-sort",
       "source": "./plugins/project-activity-sort"
     },
