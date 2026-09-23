@@ -7,7 +7,7 @@ Open-source plugins for [bb](https://github.com/get-bb/bb), the agent IDE.
 | Plugin | Description |
 | --- | --- |
 | [Full Width](./plugins/full-width) | Adds a thread-header toggle that renders the chat across the full window width instead of bb's default 760px column. Requires bb >= 0.40. |
-| [Project Activity Sort](./plugins/project-activity-sort) | Orders sidebar project sections by the most recently updated thread while retaining bb's original sidebar UI. |
+| [Project Activity Sort](./plugins/project-activity-sort) | Orders sidebar project sections by the most recently updated thread while retaining bb's original sidebar UI. Requires bb >= 0.43. |
 | [xAI Voice](./plugins/xai-voice) | Voice transcription (speech-to-text) served by xAI's Grok STT, using an xAI API key or your Grok Build CLI sign-in. Requires bb >= 0.40. |
 
 ## Install from GitHub

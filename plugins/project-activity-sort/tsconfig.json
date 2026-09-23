@@ -4,10 +4,8 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "jsx": "react-jsx",
     "lib": [
-      "ES2022",
-      "DOM"
+      "ES2022"
     ],
     "types": [
       "node"
@@ -17,9 +15,8 @@
   },
   "include": [
     "server.ts",
-    "app.tsx",
     "project-activity.ts",
-    "*.test.ts",
-    "*.test.tsx"
+    "activity-sync.ts",
+    "*.test.ts"
   ]
 }

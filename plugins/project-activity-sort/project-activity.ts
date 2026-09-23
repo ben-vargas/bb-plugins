@@ -1,21 +1,23 @@
-import type {
-  PluginSidebarProject,
-  PluginSidebarThread,
-} from "@get-bb/plugin-sdk/app";
+/** The fields of bb's project DTO this plugin reads. */
+export interface ActivityProject {
+  id: string;
+  kind: "standard" | "personal";
+}
 
-export const SIDEBAR_SECTION_ORDER_KEY = "bb.sidebar.sectionOrder";
+/** The fields of bb's thread DTO this plugin reads. */
+export interface ActivityThread {
+  id: string;
+  projectId: string;
+  parentThreadId: string | null;
+  archivedAt: number | null;
+  updatedAt: number;
+}
 
-export const DEFAULT_SIDEBAR_SECTION_ORDER = [
-  "pinned",
-  "projects",
-  "threads",
-] as const;
-
-const PROJECT_SECTION_PREFIX = "project:";
+export const PROJECT_SECTION_PREFIX = "project:";
 
 function getDisplayedProjectId(
-  thread: PluginSidebarThread,
-  threadsById: ReadonlyMap<string, PluginSidebarThread>,
+  thread: ActivityThread,
+  threadsById: ReadonlyMap<string, ActivityThread>,
 ): string {
   let current = thread;
   const visited = new Set<string>([thread.id]);
@@ -42,8 +44,8 @@ function getDisplayedProjectId(
  * Ties retain bb's existing project order.
  */
 export function sortProjectIdsByLatestThreadUpdate(
-  projects: readonly PluginSidebarProject[],
-  threads: readonly PluginSidebarThread[],
+  projects: readonly ActivityProject[],
+  threads: readonly ActivityThread[],
   existingProjectOrder: readonly string[] = [],
 ): string[] {
   const threadsById = new Map(threads.map((thread) => [thread.id, thread]));
@@ -57,7 +59,7 @@ export function sortProjectIdsByLatestThreadUpdate(
   }
 
   for (const thread of threads) {
-    if (thread.isArchived) {
+    if (thread.archivedAt !== null) {
       continue;
     }
 
@@ -70,7 +72,7 @@ export function sortProjectIdsByLatestThreadUpdate(
   }
 
   return projects
-    .filter((project) => !project.isPersonal)
+    .filter((project) => project.kind !== "personal")
     .map((project, index) => ({
       id: project.id,
       tieIndex:

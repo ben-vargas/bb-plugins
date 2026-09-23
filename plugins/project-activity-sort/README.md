@@ -1,39 +1,49 @@
 # Project Activity Sort for bb
 
-A bb sidebar plugin that changes one thing: project sections are ordered by
+A bb plugin that changes one thing: project sections are ordered by
 the most recent thread update in each project.
 
 If project `def` contains the newest thread, `def` appears first. When a thread
 in `xyz` receives a newer `updatedAt` value, `xyz` moves above it.
 
-## Baseline-preserving behavior
+## How it works
 
-The plugin renders bb's original sidebar list instead of drawing its own
-project or thread rows. As a result, unread indicators, activity spinners, row
-menus, spacing, collapse behavior, keyboard navigation, split interactions,
-search, and other left-nav behavior remain owned by bb and match the baseline
-system.
+The plugin has no UI. bb's bundled **Thread list** plugin keeps drawing the
+sidebar, so unread indicators, activity spinners, row menus, collapse
+behavior, drag and drop, and keyboard navigation all behave exactly as in
+stock bb.
 
-The only plugin behavior is:
+A small server-side process keeps the Thread list plugin's `sectionOrder`
+preference in activity order:
 
 - Rank each project by `max(thread.updatedAt)` across its visible,
   non-archived threads.
-- Reorder bb's existing project-section entries to match that rank.
-- Preserve all non-project sidebar sections in their existing positions.
-- Keep bb's existing project order when update times tie.
-- Leave bb's implicit Personal project in the baseline Threads section.
+- Reorder only the `project:<id>` entries in `sectionOrder`; Pinned, Threads,
+  and any other entries keep their positions.
+- Keep the current order when update times tie.
+- Leave bb's Personal project in the Threads section.
 
-A nested child thread contributes activity to the project section where bb
-displays its root thread tree.
+A nested child thread contributes activity to its root thread's project.
 
-## Compatibility note
+The plugin re-syncs on thread lifecycle events (debounced), every five
+minutes as a fallback, and on start. It writes only when the order actually
+changes. The preference syncs through the bb server, so every window and
+device updates live.
 
-The plugin SDK provides bb's original list but does not currently expose a
-project-section comparator. This plugin therefore synchronizes bb's existing
-per-client section-order preference, `bb.sidebar.sectionOrder`, while delegating
-all rendering and interaction to the original list. It targets bb `>=0.39` and
-plugin SDK `>=0.4.8`; a future bb change to that preference may require a small
-compatibility update.
+Ordering applies when the sidebar is organized **By project**
+(`bb thread-list prefs set organizationMode project`). Manually dragging a
+project works, but the next thread update re-sorts the list.
+
+## Compatibility
+
+Requires bb `>=0.43` (the release where the sidebar became the bundled
+`thread-list` plugin) and plugin SDK `>=0.5.9`. The plugin reads and writes
+the preference through the Thread list plugin's `listPreferences` and
+`setPreference` RPC methods. The same data is available from
+`bb thread-list prefs get sectionOrder`.
+
+Version 0.1.0 targeted bb 0.39–0.42. It replaced the sidebar list and wrote
+`localStorage`. It does not work on bb 0.43 or later.
 
 ## Install from GitHub
 
@@ -43,9 +53,9 @@ bb plugin install \
   --plugin project-activity-sort
 ```
 
-The plugin registers an exclusive sidebar-list provider named **Projects by
-recent activity**. If bb is pinned to another provider, select it under
-**Settings → Appearance → Sidebar**.
+If you pinned **Projects by recent activity** as the sidebar provider in an
+earlier version, switch **Settings → Appearance → Sidebar** back to
+Automatic or Thread list.
 
 ## Develop and verify
 

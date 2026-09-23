@@ -1,57 +1,28 @@
 import { describe, expect, it } from "vitest";
-import type {
-  PluginSidebarProject,
-  PluginSidebarThread,
-} from "@get-bb/plugin-sdk/app";
 import {
+  type ActivityProject,
+  type ActivityThread,
   applyProjectActivityOrder,
   haveSameOrder,
   sortProjectIdsByLatestThreadUpdate,
 } from "./project-activity";
 
-function project(id: string, isPersonal = false): PluginSidebarProject {
-  return {
-    id,
-    name: id,
-    isPersonal,
-  };
+function project(id: string, isPersonal = false): ActivityProject {
+  return { id, kind: isPersonal ? "personal" : "standard" };
 }
 
 function thread(
   id: string,
   projectId: string,
   updatedAt: number,
-  overrides: Partial<PluginSidebarThread> = {},
-): PluginSidebarThread {
+  overrides: Partial<ActivityThread> = {},
+): ActivityThread {
   return {
     id,
     projectId,
-    title: id,
-    titleFallback: null,
-    sectionId: null,
-    originKind: null,
-    originPluginId: null,
-    providerId: "codex",
-    hasPendingInteraction: false,
-    activity: {
-      workflows: 0,
-      backgroundAgents: 0,
-      backgroundCommands: 0,
-      planMode: 0,
-      goals: 0,
-    },
-    indicator: "none",
-    indicatorLabel: null,
-    isUnread: false,
-    isPinned: false,
-    isArchived: false,
-    environment: null,
-    host: null,
-    createdAt: 1,
-    updatedAt,
-    lastReadAt: null,
-    latestAttentionAt: updatedAt,
     parentThreadId: null,
+    archivedAt: null,
+    updatedAt,
     ...overrides,
   };
 }
@@ -82,7 +53,7 @@ describe("sortProjectIdsByLatestThreadUpdate", () => {
   it("ignores archived threads", () => {
     expect(
       sortProjectIdsByLatestThreadUpdate(projects, [
-        thread("archived", "abc", 500, { isArchived: true }),
+        thread("archived", "abc", 500, { archivedAt: 600 }),
         thread("d", "def", 300),
         thread("x", "xyz", 200),
       ]),

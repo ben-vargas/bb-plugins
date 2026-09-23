@@ -1,6 +1,6 @@
 {
   "name": "@benvargas/bb-plugin-project-activity-sort",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -9,17 +9,16 @@
     "directory": "plugins/project-activity-sort"
   },
   "engines": {
-    "bb": ">=0.39",
-    "bbPluginSdk": ">=0.4.8"
+    "bb": ">=0.43",
+    "bbPluginSdk": ">=0.5.9"
   },
   "bb": {
     "name": "Project Activity Sort",
-    "description": "Sort sidebar project groups by their most recently updated thread.",
+    "description": "Sort sidebar project sections by their most recently updated thread.",
     "branding": {
       "icon": "Sort"
     },
     "server": "./server.ts",
-    "app": "./app.tsx",
     "skills": []
   },
   "scripts": {
@@ -28,24 +27,25 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@get-bb/plugin-sdk": "0.4.8",
-    "@testing-library/react": "^16.3.2",
+    "@get-bb/plugin-sdk": "0.5.15",
     "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.0.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "jsdom": "^29.1.1",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
     "typescript": "^5.7.0",
     "vitest": "^4.1.11"
   },
   "files": [
     "dist",
     "server.ts",
-    "app.tsx",
     "project-activity.ts",
+    "activity-sync.ts",
     "tsconfig.json",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "keywords": [
+    "bb-plugin"
   ]
 }
