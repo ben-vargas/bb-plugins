@@ -1,23 +1,24 @@
 /**
- * Host entry: serves bb's AI-services voice contract on the primary host.
- * Credentials are host-local (XAI_API_KEY env or the Grok CLI's OAuth
- * store), which is why transcription runs here rather than in the server
- * process. The Grok store is strictly read-only for this plugin — an expired
- * session is refreshed by delegating to the `grok` CLI (see src/xai-stt.ts).
+ * Host entry: transcribes for the server entry's `xai-voice` AI service on
+ * the primary host. Credentials are host-local (XAI_API_KEY env or the Grok
+ * CLI's OAuth store), which is why transcription runs here rather than in
+ * the server process. The Grok store is strictly read-only for this plugin —
+ * an expired session is refreshed by delegating to the `grok` CLI (see
+ * src/xai-stt.ts).
  */
 import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import os from "node:os";
-import {
-  experimental_aiServicesHostContract,
-  type ExperimentalAiInferenceCompleteOutput,
-  type ExperimentalAiVoiceTranscribeOutput,
-} from "@get-bb/plugin-sdk/ai-services";
 import { experimental_defineHostEntry } from "@get-bb/plugin-sdk/host";
 import {
+  xaiVoiceHostContract,
+  type XaiVoiceStatus,
+  type XaiVoiceTextResult,
+} from "./src/host-contract.js";
+import {
+  readXaiVoiceStatus,
   resolveGrokAuthPath,
   transcribeXaiVoice,
-  XAI_VOICE_SERVICE_ID,
   type XaiSttDeps,
 } from "./src/xai-stt.js";
 
@@ -67,27 +68,14 @@ const deps: XaiSttDeps = {
 };
 
 export default experimental_defineHostEntry({
-  contract: experimental_aiServicesHostContract,
+  contract: xaiVoiceHostContract,
   handlers: {
-    "ai.inference.complete": async (
+    "xai.voice.transcribe": async (
       input,
-    ): Promise<ExperimentalAiInferenceCompleteOutput> => ({
-      ok: false,
-      code: "request_failed",
-      message: `The "${input.serviceId}" service serves voice transcription only.`,
-    }),
-    "ai.voice.transcribe": async (
-      input,
-    ): Promise<ExperimentalAiVoiceTranscribeOutput> => {
-      if (input.serviceId !== XAI_VOICE_SERVICE_ID) {
-        return {
-          ok: false,
-          code: "request_failed",
-          message: `This plugin serves no AI service "${input.serviceId}".`,
-        };
-      }
+      context,
+    ): Promise<XaiVoiceTextResult> => {
       try {
-        return await transcribeXaiVoice(input, deps);
+        return await transcribeXaiVoice(input, deps, context.signal);
       } catch (error) {
         return {
           ok: false,
@@ -96,5 +84,6 @@ export default experimental_defineHostEntry({
         };
       }
     },
+    "xai.voice.status": (): Promise<XaiVoiceStatus> => readXaiVoiceStatus(deps),
   },
 });

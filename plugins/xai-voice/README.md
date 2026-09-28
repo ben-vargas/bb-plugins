@@ -2,13 +2,14 @@
 
 Voice transcription (speech-to-text) for bb, served by xAI's Grok STT
 (`https://api.x.ai/v1/stt`). Registers the `xai-voice` AI service so bb's
-prompt-box dictation can run on xAI instead of OpenAI or Codex.
+prompt-box dictation can run on xAI instead of Codex.
 
 ## Requirements
 
-- bb newer than 0.39.0 (the plugin AI-services API — `experimental_aiServices`
-  with a `voice` kind — landed after that release).
-- Credentials on the host that runs transcription, either of:
+- bb 0.44 or newer (plugin SDK >= 0.5.23, where AI services became plain
+  `transcribe`/`complete` functions picked per task). bb 0.40–0.43 used an
+  older host-contract API; use xai-voice 0.1.x there.
+- Credentials on the primary machine (where bb's host daemon runs), either of:
   - **xAI API key** — `XAI_API_KEY` in the host daemon's environment.
   - **Grok sign-in (OAuth)** — a Grok Build CLI session in its auth store
     (`GROK_AUTH_PATH`, else `$GROK_HOME/auth.json`, else
@@ -18,9 +19,9 @@ prompt-box dictation can run on xAI instead of OpenAI or Codex.
     CLI's own unconditional non-interactive refresh
     (`try_ensure_fresh_auth`: cross-process lock, refresh-token rotation,
     atomic persist) — then re-reads the store. The spawned CLI is never
-    killed; a transcription that runs out of time while a refresh is in
-    flight returns bb's retryable `timeout` code and the next attempt
-    reads the refreshed session. The `grok` binary must be on the host
+    killed; a transcription that runs out of bb's 10-second budget while a
+    refresh is in flight fails, and the next dictation reads the refreshed
+    session. The `grok` binary must be on the host
     daemon's PATH for OAuth.
 
 When both are present the API key wins.
@@ -30,18 +31,21 @@ When both are present the API key wins.
 ```sh
 # from GitHub, tracking compatible releases:
 bb plugin install \
-  git:https://github.com/ben-vargas/bb-plugins.git@semver:^0.1.0 \
+  git:https://github.com/ben-vargas/bb-plugins.git@semver:^0.2.0 \
   --plugin xai-voice \
   --tag-prefix xai-voice/
 
 # or from a local checkout of this repository:
 bb plugin install path:. --plugin xai-voice
 
-npx bb-app config set BB_TRANSCRIPTION xai-voice/grok-stt
+bb settings ai-services set voice xai-voice
 ```
 
-xAI exposes no STT model choice — the `<model>` segment after `xai-voice/` is
-required by bb's `<service>/<model>` format but otherwise unused.
+Or pick **xAI (API key or Grok sign-in)** for Voice in Settings → AI services.
+The picker shows the service as not ready (and bb hides the microphone) when
+the primary machine has neither `XAI_API_KEY` nor a Grok session. A picked
+service is used alone: bb does not fall back to another service when it
+fails. xAI exposes no STT model choice, and bb's vocabulary hint is not sent.
 
 ## Configuration
 
@@ -69,6 +73,6 @@ required by bb's `<service>/<model>` format but otherwise unused.
 ## Releasing
 
 Build the published `dist/` artifacts with a bb whose SDK matches
-`engines.bbPluginSdk` (>= 0.4.16, i.e. bb newer than 0.39.0) so
+`engines.bbPluginSdk` (>= 0.5.23, i.e. bb 0.44 or newer) so
 `dist/*.meta.json` records a matching `builtWith`; artifacts built by an
 older bb carry stale metadata and must not be packed or tagged.

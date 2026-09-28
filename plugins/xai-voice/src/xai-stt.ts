@@ -22,19 +22,20 @@
  * re-reading the store.
  *
  * The spawned CLI is never killed: a transcription whose budget runs out
- * while the refresh is still in flight returns the retryable `timeout`
- * code and leaves the refresh to finish, so bb's second attempt reads the
+ * while the refresh is still in flight fails with the `timeout` code and
+ * leaves the refresh to finish, so the user's next dictation reads the
  * refreshed store.
  */
 import type {
-  ExperimentalAiVoiceTranscribeInput,
-  ExperimentalAiVoiceTranscribeOutput,
-} from "@get-bb/plugin-sdk/ai-services";
+  XaiVoiceFailure,
+  XaiVoiceStatus,
+  XaiVoiceTextResult,
+  XaiVoiceTranscribeInput,
+} from "./host-contract.js";
 
 /**
- * The AI service id this plugin registers; `BB_TRANSCRIPTION=xai-voice/<model>`.
- * NOT "xai": that id is in the SDK's SERVER_DIRECT_AI_SERVICE_IDS reserved
- * list (the server serves it directly) and registration would throw.
+ * The AI service id this plugin registers, shown in Settings → AI services
+ * and accepted by `bb settings ai-services set voice xai-voice`.
  */
 export const XAI_VOICE_SERVICE_ID = "xai-voice";
 
@@ -77,7 +78,7 @@ interface GrokAuthEntry {
   oidc_client_id?: string;
 }
 
-type Failure = Extract<ExperimentalAiVoiceTranscribeOutput, { ok: false }>;
+type Failure = XaiVoiceFailure;
 
 function failure(code: Failure["code"], message: string): Failure {
   return { ok: false, code, message };
@@ -85,6 +86,9 @@ function failure(code: Failure["code"], message: string): Failure {
 
 const AUTH_HINT =
   "Set XAI_API_KEY on the host, or sign in with the Grok CLI (`grok`).";
+
+const STATUS_HINT =
+  "Set XAI_API_KEY on the primary machine, or run `grok` there to sign in";
 
 // ── Grok auth store (read-only) ─────────────────────────────────────────────
 
@@ -298,8 +302,8 @@ async function resolveAuthAfterRejection(
  * re-read after every await, so a slow store read cannot let the refresh
  * overrun the request deadline), delegating a *locally expired* Grok
  * session to the CLI's own refresh. A refresh that outlives the budget
- * returns the retryable `timeout` code — the CLI finishes on its own and
- * the next attempt reads its work.
+ * returns the `timeout` code — the CLI finishes on its own and the next
+ * attempt reads its work.
  */
 async function resolveAuth(
   deps: XaiSttDeps,
@@ -328,7 +332,7 @@ async function resolveAuth(
       return {
         failure: failure(
           "timeout",
-          "No time left to refresh the Grok session; retrying will pick up a fresh one.",
+          "No time left to refresh the Grok session; try again to use a fresh one.",
         ),
       };
     }
@@ -337,7 +341,7 @@ async function resolveAuth(
       return {
         failure: failure(
           "timeout",
-          "The Grok session refresh is still running; retrying will use the refreshed session.",
+          "The Grok session refresh is still running; try again to use the refreshed session.",
         ),
       };
     }
@@ -402,7 +406,7 @@ async function readBodyText(
 }
 
 async function postAudio(
-  input: ExperimentalAiVoiceTranscribeInput,
+  input: XaiVoiceTranscribeInput,
   bearer: string,
   deps: XaiSttDeps,
   signal: AbortSignal,
@@ -459,18 +463,38 @@ async function mapErrorResponse(response: Response): Promise<Failure> {
 }
 
 /**
+ * Whether transcription can plausibly run: an API key, or a Grok auth store
+ * holding at least one session. An expired session still counts — the Grok
+ * CLI refreshes it on first use — so bb keeps the microphone visible.
+ */
+export async function readXaiVoiceStatus(
+  deps: XaiSttDeps,
+): Promise<XaiVoiceStatus> {
+  if (deps.env.XAI_API_KEY?.trim()) return { ready: true };
+  const read = await readGrokStore(deps);
+  if ("failure" in read || read.store.size === 0) {
+    return { ready: false, message: STATUS_HINT };
+  }
+  return { ready: true };
+}
+
+/**
  * Transcribe one audio clip. The whole operation — CLI-delegated credential
- * refresh included — is bounded by `input.timeoutMs`; a refresh that
- * outlives the budget is abandoned (not killed) with the retryable
- * `timeout` code.
+ * refresh included — is bounded by `input.timeoutMs` and by `requestSignal`
+ * (bb cancelling the request); a refresh that outlives the budget is
+ * abandoned (not killed) with the `timeout` code.
  */
 export async function transcribeXaiVoice(
-  input: ExperimentalAiVoiceTranscribeInput,
+  input: XaiVoiceTranscribeInput,
   deps: XaiSttDeps,
-): Promise<ExperimentalAiVoiceTranscribeOutput> {
+  requestSignal?: AbortSignal,
+): Promise<XaiVoiceTextResult> {
   const startedAt = deps.now();
   const deadline = startedAt + input.timeoutMs;
-  const signal = AbortSignal.timeout(input.timeoutMs);
+  const timeoutSignal = AbortSignal.timeout(input.timeoutMs);
+  const signal = requestSignal
+    ? AbortSignal.any([timeoutSignal, requestSignal])
+    : timeoutSignal;
   const remaining = () => deadline - deps.now();
 
   const resolved = await resolveAuth(deps, remaining);
@@ -512,5 +536,5 @@ export async function transcribeXaiVoice(
   if (typeof text !== "string") {
     return failure("invalid_response", "xAI response had no text field.");
   }
-  return { ok: true, model: input.model, text };
+  return { ok: true, text };
 }

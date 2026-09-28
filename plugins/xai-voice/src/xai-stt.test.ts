@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ExperimentalAiVoiceTranscribeInput } from "@get-bb/plugin-sdk/ai-services";
+import type { XaiVoiceTranscribeInput } from "./host-contract.js";
 import {
   transcribeXaiVoice,
   type GrokRefreshOutcome,
@@ -13,13 +13,10 @@ const ISSUER = "https://auth.x.ai";
 const CLIENT = "client-uuid";
 const SCOPE = `${ISSUER}::${CLIENT}`;
 
-const INPUT: ExperimentalAiVoiceTranscribeInput = {
-  serviceId: "xai-voice",
-  model: "grok-stt",
+const INPUT: XaiVoiceTranscribeInput = {
   audioBase64: Buffer.from("RIFF-fake-wav-bytes").toString("base64"),
   mimeType: "audio/webm",
   filename: "recording.webm",
-  prompt: null,
   timeoutMs: 10_000,
 };
 
@@ -120,7 +117,7 @@ describe("transcribeXaiVoice", () => {
       responses: [() => json(200, { text: "hello world", duration: 1.2 })],
     });
     const result = await transcribeXaiVoice(INPUT, deps);
-    expect(result).toEqual({ ok: true, model: "grok-stt", text: "hello world" });
+    expect(result).toEqual({ ok: true, text: "hello world" });
     expect(requests).toHaveLength(1);
     expect(requests[0]!.url).toBe("https://api.x.ai/v1/stt");
     expect(requests[0]!.headers.authorization).toBe("Bearer sk-key");
@@ -133,7 +130,7 @@ describe("transcribeXaiVoice", () => {
       responses: [() => json(200, { text: "via oauth" })],
     });
     const result = await transcribeXaiVoice(INPUT, deps);
-    expect(result).toEqual({ ok: true, model: "grok-stt", text: "via oauth" });
+    expect(result).toEqual({ ok: true, text: "via oauth" });
     expect(requests[0]!.headers.authorization).toBe("Bearer session-bearer");
     expect(refreshCallCount()).toBe(0);
   });
@@ -207,7 +204,7 @@ describe("transcribeXaiVoice", () => {
       responses: [() => json(200, { text: "refreshed" })],
     });
     const result = await transcribeXaiVoice(INPUT, deps);
-    expect(result).toEqual({ ok: true, model: "grok-stt", text: "refreshed" });
+    expect(result).toEqual({ ok: true, text: "refreshed" });
     expect(refreshCallCount()).toBe(1);
     expect(requests[0]!.headers.authorization).toBe("Bearer cli-refreshed");
   });
@@ -417,6 +414,20 @@ describe("transcribeXaiVoice", () => {
     }
   });
 
+  it("aborts the xAI request when bb cancels", async () => {
+    const controller = new AbortController();
+    let seen: AbortSignal | undefined;
+    const { deps } = makeDeps({ env: { XAI_API_KEY: "sk" }, responses: [] });
+    deps.fetchImpl = (async (_url: RequestInfo | URL, init?: RequestInit) => {
+      seen = init?.signal ?? undefined;
+      controller.abort();
+      throw new DOMException("aborted", "AbortError");
+    }) as typeof fetch;
+    const result = await transcribeXaiVoice(INPUT, deps, controller.signal);
+    expect(seen?.aborted).toBe(true);
+    expect(result).toMatchObject({ ok: false, code: "timeout" });
+  });
+
   it("returns an empty transcription as success", async () => {
     const { deps } = makeDeps({
       env: { XAI_API_KEY: "sk" },
@@ -424,7 +435,6 @@ describe("transcribeXaiVoice", () => {
     });
     expect(await transcribeXaiVoice(INPUT, deps)).toEqual({
       ok: true,
-      model: "grok-stt",
       text: "",
     });
   });

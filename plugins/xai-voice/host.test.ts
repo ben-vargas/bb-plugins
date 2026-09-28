@@ -3,12 +3,9 @@ import { experimental_createHostEntryHarness } from "@get-bb/plugin-sdk/testing/
 import hostEntry from "./host.js";
 
 const BASE_INPUT = {
-  serviceId: "xai-voice",
-  model: "grok-stt",
   audioBase64: Buffer.from("bytes").toString("base64"),
   mimeType: "audio/webm",
   filename: "clip.webm",
-  prompt: null,
   timeoutMs: 5000,
 };
 
@@ -18,33 +15,6 @@ afterEach(() => {
 });
 
 describe("host entry", () => {
-  it("declines a foreign service id without touching the network", async () => {
-    const fetchSpy = vi.fn();
-    vi.stubGlobal("fetch", fetchSpy);
-    const harness = experimental_createHostEntryHarness(hostEntry);
-    const result = await harness.experimental_call("ai.voice.transcribe", {
-      ...BASE_INPUT,
-      serviceId: "some-other-service",
-    });
-    expect(result).toMatchObject({ ok: false, code: "request_failed" });
-    expect(fetchSpy).not.toHaveBeenCalled();
-    await harness.experimental_dispose();
-  });
-
-  it("declines helper inference (voice-only plugin)", async () => {
-    const harness = experimental_createHostEntryHarness(hostEntry);
-    const result = await harness.experimental_call("ai.inference.complete", {
-      serviceId: "xai-voice",
-      model: "grok-stt",
-      reasoningEffort: "none",
-      prompt: "title this",
-      outputSchema: { type: "object" },
-      timeoutMs: 5000,
-    });
-    expect(result).toMatchObject({ ok: false, code: "request_failed" });
-    await harness.experimental_dispose();
-  });
-
   it("transcribes through the contract with an API key", async () => {
     vi.stubEnv("XAI_API_KEY", "sk-test");
     vi.stubGlobal(
@@ -55,10 +25,30 @@ describe("host entry", () => {
     );
     const harness = experimental_createHostEntryHarness(hostEntry);
     const result = await harness.experimental_call(
-      "ai.voice.transcribe",
+      "xai.voice.transcribe",
       BASE_INPUT,
     );
-    expect(result).toEqual({ ok: true, model: "grok-stt", text: "hi there" });
+    expect(result).toEqual({ ok: true, text: "hi there" });
+    await harness.experimental_dispose();
+  });
+
+  it("reports ready when an API key is set", async () => {
+    vi.stubEnv("XAI_API_KEY", "sk-test");
+    const harness = experimental_createHostEntryHarness(hostEntry);
+    expect(await harness.experimental_call("xai.voice.status", {})).toEqual({
+      ready: true,
+    });
+    await harness.experimental_dispose();
+  });
+
+  it("reports not ready with no API key and no Grok session", async () => {
+    vi.stubEnv("XAI_API_KEY", "");
+    vi.stubEnv("GROK_AUTH_PATH", "/nonexistent/xai-voice-test/auth.json");
+    const harness = experimental_createHostEntryHarness(hostEntry);
+    expect(await harness.experimental_call("xai.voice.status", {})).toEqual({
+      ready: false,
+      message: expect.stringContaining("XAI_API_KEY"),
+    });
     await harness.experimental_dispose();
   });
 });
